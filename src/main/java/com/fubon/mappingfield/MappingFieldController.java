@@ -40,16 +40,18 @@ public class MappingFieldController {
     }
 
     @PostMapping("/")
-    public String handleFieldUpload(
+    @CrossOrigin(origins = "*")
+    public ResponseEntity handleFieldUpload(
             @RequestParam("file") MultipartFile file,
             @RequestParam("name") String name,
             RedirectAttributes redirectAttributes
     ) {
         mappingFieldList.add(new MappingField(counter.incrementAndGet(), name, excelParserService.parse(file)));
-        return "redirect:/";
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/mappingField")
+    @CrossOrigin(origins = "*")
     public ResponseEntity<MappingField> getMappingFields(@RequestParam long id) {
         Optional<MappingField> optionalResultMappingField = mappingFieldList.stream()
                                                         .filter(m -> m.getId() == id)
@@ -62,11 +64,13 @@ public class MappingFieldController {
     }
 
     @GetMapping("/mappingFields")
+    @CrossOrigin(origins = "*")
     public List<MappingField> getMappingFields() {
         return mappingFieldList;
     }
 
     @PostMapping("/mappingField")
+    @CrossOrigin(origins = "*")
     public MappingField addMappingFields(@RequestBody MappingField mappingField) {
         mappingField.setId(counter.incrementAndGet());
         mappingFieldList.add(mappingField);
@@ -74,23 +78,22 @@ public class MappingFieldController {
     }
 
     @GetMapping("/excel")
+    @CrossOrigin(origins = "*")
     public ResponseEntity<StreamingResponseBody> excel(@RequestParam long id) throws IOException {
         Optional<MappingField> optionalResultMappingField = mappingFieldList.stream()
                                                             .filter(m -> m.getId() == id)
                                                             .findFirst();
-
         if (optionalResultMappingField.isPresent()) {
             Workbook out = excelParserService.parseToExcel(optionalResultMappingField.get());
             return ResponseEntity
                     .ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=\""+ optionalResultMappingField.get().getName()+".xlsx\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\""+ optionalResultMappingField.get().getName()+".xlsx\"")
+                    .header("Access-Control-Expose-Headers", "*")
                     .body(out::write);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
-
-
     }
 }
+//attachment; filename="file.docx"
